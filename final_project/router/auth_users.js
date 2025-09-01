@@ -3,25 +3,62 @@ const jwt = require('jsonwebtoken');
 let books = require("./booksdb.js");
 const regd_users = express.Router();
 
-let users = [];
+let users = {
+  "thara": { password: "secure123" }
+};
 
-const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
+// Check if username exists
+const isValid = (username) => { 
+  return users.hasOwnProperty(username);
 }
 
-const authenticatedUser = (username,password)=>{ //returns boolean
-//write code to check if username and password match the one we have in records.
+// Check if username/password match
+const authenticatedUser = (username, password) => { 
+  if (isValid(username)) {
+    return users[username].password === password;
+  }
+  return false;
 }
 
-//only registered users can login
+
 regd_users.post("/login", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
-});
+    const { username, password } = req.body;
+  
+    // Check if username and password are provided
+    if (!username || !password) {
+      return res.status(400).send(JSON.stringify({ message: "Username and password are required." }));
+    }
+  
+    // Validate user
+    if (!isValid(username)) {
+      return res.status(404).send(JSON.stringify({ message: "User not found." }));
+    }
+  
+    if (users[username].password !== password) {
+      return res.status(401).send(JSON.stringify({ message: "Invalid password." }));
+    }
+  
+    const accessToken = jwt.sign(
+      { username },
+      "access", // secret key
+      { expiresIn: '1h' }
+    );
+  
+    // Save token in session
+    req.session.authorization = {
+      accessToken,
+      username
+    };
+  
+    return res.status(200).send(JSON.stringify({ 
+      message: "Login successful", 
+      token: accessToken 
+    }, null, 2));
+  });
+  
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
   return res.status(300).json({message: "Yet to be implemented"});
 });
 
